@@ -6,6 +6,7 @@ using static System.Windows.Forms.LinkLabel;
 using Microsoft.VisualBasic.ApplicationServices;
 using System.Reflection.PortableExecutable;
 using System.Linq.Expressions;
+using System.Diagnostics;
 
 namespace WordSearcher
 {
@@ -33,48 +34,64 @@ namespace WordSearcher
             }
         }
 
-        private void SearchWordButton_Click(object sender, EventArgs e)
+        private async void SearchWordButton_Click(object sender, EventArgs e)
         {
-            progressBar1.Value = 0;
-            listBox1.Items.Clear();
-            string[] allFoundFiles = Directory.GetFiles(DirectoryNameTextBox.Text, "*.txt", SearchOption.AllDirectories);
-            foreach (string file in allFoundFiles)
+            await Task.Run(async () =>
             {
-                string[] lines = System.IO.File.ReadAllLines(file);
-                int i = 0;
-                string b = WordTextBox.Text; //Искомое слово
+                try
+                {
+                    Stopwatch stopwatch = new Stopwatch(); //засекаем время начала операции
+                    stopwatch.Start(); //выполняем какую-либо операцию
 
-                if (WordTextBox.Text == String.Empty)
-                {
-                    listBox1.Items.Add(file);
-                    #region 
-                    //timer1.Interval = 500; // 500 миллисекунд
-                    timer1.Enabled = true;
-                    timer1.Tick += timer1_Tick;
-                    #endregion
-                }
-                if (WordTextBox.Text != String.Empty)
-                {
-                    foreach (string line in lines)
+                    progressBar1.Value = 0;
+                    listBox1.Items.Clear();
+                    string[] allFoundFiles = Directory.GetFiles(DirectoryNameTextBox.Text, "*.txt", SearchOption.AllDirectories);
+                    foreach (string file in allFoundFiles)
                     {
-                        string[] var = lines[i].Split(default(string[]), StringSplitOptions.RemoveEmptyEntries);
-                        i += 1;
-                        foreach (string word in var)
+                        string[] lines = System.IO.File.ReadAllLines(file);
+                        int i = 0;
+                        string b = WordTextBox.Text; //Искомое слово
+
+                        if (WordTextBox.Text == String.Empty)
                         {
-                            if (b.Equals(word))
+                            listBox1.Items.Add(file);
+                            #region 
+                            //timer1.Interval = 500; // 500 миллисекунд
+                            timer1.Enabled = true;
+                            timer1.Tick += timer1_Tick;
+                            #endregion
+                        }
+                        if (WordTextBox.Text != String.Empty)
+                        {
+                            foreach (string line in lines)
                             {
-                                listBox1.Items.Add(file);
-                                //timer1.Interval = 500; // 500 миллисекунд
-                                #region 
-                                timer1.Enabled = true;
-                                timer1.Tick += timer1_Tick;
-                                break;
-                                #endregion
+                                string[] var = lines[i].Split(default(string[]), StringSplitOptions.RemoveEmptyEntries);
+                                i += 1;
+                                foreach (string word in var)
+                                {
+                                    if (b.Equals(word))
+                                    {
+                                        listBox1.Items.Add(file);
+                                        //timer1.Interval = 500; // 500 миллисекунд
+                                        #region 
+                                        timer1.Enabled = true;
+                                        timer1.Tick += timer1_Tick;
+                                        break;
+                                        #endregion
+                                    }
+                                }
                             }
                         }
                     }
+
+                    stopwatch.Stop(); //останавливаем счетчик
+                    MessageBox.Show(Convert.ToString(stopwatch.ElapsedMilliseconds) + " Милисекунд", "Время затраченное на поиск", MessageBoxButtons.OK, MessageBoxIcon.Information); //смотрим сколько миллисекунд было затрачено на выполнение
                 }
-            }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                }
+            });
         }
 
         private void SaveReportButton_Click(object sender, EventArgs e)
@@ -116,7 +133,6 @@ namespace WordSearcher
             }
         }
 
-
         private void ChangeButton_Click(object sender, EventArgs e)
         {
             try
@@ -135,16 +151,24 @@ namespace WordSearcher
             {
                 richTextBox1.Text = null;
                 List<string> str;
-                using (var sw = new StreamReader(listBox1.SelectedItem.ToString()))
+
+                if (listBox1.SelectedItem != null)
                 {
-                    string s = await sw.ReadToEndAsync();
-                    s = s.Replace(WordTextBox.Text, "*******");
-                    str = s.Split('\n').Select(s => s != "" ? s : "0").ToList();
+                    using (var sw = new StreamReader(listBox1.SelectedItem.ToString()))
+                    {
+                        string s = await sw.ReadToEndAsync();
+                        s = s.Replace(WordTextBox.Text, "*******");
+                        str = s.Split('\n').Select(s => s != "" ? s : "0").ToList();
+                    }
+                    foreach (var s in str)
+                    {
+                        await Task.Delay(50);
+                        richTextBox1.Text += s + "\n";
+                    }
                 }
-                foreach (var s in str)
+                else
                 {
-                    //await Task.Delay(300);
-                    richTextBox1.Text += s + "\n";
+                    MessageBox.Show("Вы ничего не выбрали!");
                 }
             }
             
@@ -162,32 +186,58 @@ namespace WordSearcher
 
         async void ReadFromFile()
         {
-            richTextBox1.Text = null;
-            List<string> str;
-            using (var sw = new StreamReader(listBox1.SelectedItem.ToString()))
+            try
             {
-                string s = await sw.ReadToEndAsync();
-                str = s.Split('\n').Select(s => s != "" ? s : "0").ToList();
+                richTextBox1.Text = null;
+                List<string> str;
+
+                if(listBox1.SelectedItem != null)
+                {
+                    using (var sw = new StreamReader(listBox1.SelectedItem.ToString()))
+                    {
+                        string s = await sw.ReadToEndAsync();
+                        str = s.Split('\n').Select(s => s != "" ? s : "0").ToList();
+                    }
+                    foreach (var s in str)
+                    {
+                        await Task.Delay(50);
+                        richTextBox1.Text += s + "\n";
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Вы ничего не выбрали!");
+                }
             }
-            foreach (var s in str)
+
+            catch (Exception ex)
             {
-                //await Task.Delay(300);
-                richTextBox1.Text += s + "\n";
+                MessageBox.Show(ex.Message);
             }
         }
+        
         private void CopyButton_Click(object sender, EventArgs e)
         {
             try
             {
-                FileInfo fi = new FileInfo(listBox1.SelectedItem.ToString());
-                fi.CopyTo(DirectoryNameTextBox2.Text + "\\" + fi.Name);
-                MessageBox.Show("Файл успешно скопирован");
+                if(listBox1.SelectedItem != null) 
+                {
+                    FileInfo fi = new FileInfo(listBox1.SelectedItem.ToString());
+                    fi.CopyTo(DirectoryNameTextBox2.Text + "\\" + fi.Name);
+                    MessageBox.Show("Файл успешно скопирован");
+                }
+
+                else
+                {
+                    MessageBox.Show("Вы ничего не выбрали!");
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
             }
         }
+        
         private void SaveButton_Click(object sender, EventArgs e)
         {
             try
