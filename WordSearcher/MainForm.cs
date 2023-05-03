@@ -34,64 +34,72 @@ namespace WordSearcher
             }
         }
 
-        private async void SearchWordButton_Click(object sender, EventArgs e)
+        private void SearchWordButton_Click(object sender, EventArgs e)
         {
-            await Task.Run(async () =>
+            Thread thread1 = new Thread(SearchWord);
+            thread1.Start();
+            //SearchWord();
+        }
+
+
+        public void SearchWord()
+        {
+            try
             {
-                try
-                {
-                    Stopwatch stopwatch = new Stopwatch(); //засекаем время начала операции
-                    stopwatch.Start(); //выполняем какую-либо операцию
+                Stopwatch stopwatch = new Stopwatch(); //засекаем время начала операции
+                stopwatch.Start(); //выполняем какую-либо операцию
 
+                this.Invoke((Action)(() => {
                     progressBar1.Value = 0;
+                }));
+                this.Invoke((Action)(() => {
                     listBox1.Items.Clear();
-                    string[] allFoundFiles = Directory.GetFiles(DirectoryNameTextBox.Text, "*.txt", SearchOption.AllDirectories);
-                    foreach (string file in allFoundFiles)
-                    {
-                        string[] lines = System.IO.File.ReadAllLines(file);
-                        int i = 0;
-                        string b = WordTextBox.Text; //Искомое слово
+                }));
+                string[] allFoundFiles = Directory.GetFiles(DirectoryNameTextBox.Text, "*.txt", SearchOption.AllDirectories);
+                foreach (string file in allFoundFiles)
+                {
+                    string[] lines = System.IO.File.ReadAllLines(file);
+                    int i = 0;
+                    string b = WordTextBox.Text; //Искомое слово
 
-                        if (WordTextBox.Text == String.Empty)
-                        {
+                    if (WordTextBox.Text == String.Empty)
+                    {
+                        this.Invoke((Action)(() => {
                             listBox1.Items.Add(file);
-                            #region 
-                            //timer1.Interval = 500; // 500 миллисекунд
+                            timer1.Interval = 500; // 500 миллисекунд
                             timer1.Enabled = true;
                             timer1.Tick += timer1_Tick;
-                            #endregion
-                        }
-                        if (WordTextBox.Text != String.Empty)
+                        }));
+                    }
+                    if (WordTextBox.Text != String.Empty)
+                    {
+                        foreach (string line in lines)
                         {
-                            foreach (string line in lines)
+                            string[] var = lines[i].Split(default(string[]), StringSplitOptions.RemoveEmptyEntries);
+                            i += 1;
+                            foreach (string word in var)
                             {
-                                string[] var = lines[i].Split(default(string[]), StringSplitOptions.RemoveEmptyEntries);
-                                i += 1;
-                                foreach (string word in var)
+                                if (b.Equals(word))
                                 {
-                                    if (b.Equals(word))
-                                    {
+                                    this.Invoke((Action)(() => {
                                         listBox1.Items.Add(file);
-                                        //timer1.Interval = 500; // 500 миллисекунд
-                                        #region 
+                                        timer1.Interval = 500; // 500 миллисекунд
                                         timer1.Enabled = true;
                                         timer1.Tick += timer1_Tick;
-                                        break;
-                                        #endregion
-                                    }
+                                    }));
                                 }
                             }
                         }
                     }
-
-                    stopwatch.Stop(); //останавливаем счетчик
-                    MessageBox.Show(Convert.ToString(stopwatch.ElapsedMilliseconds) + " Милисекунд", "Время затраченное на поиск", MessageBoxButtons.OK, MessageBoxIcon.Information); //смотрим сколько миллисекунд было затрачено на выполнение
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                }
-            });
+                
+                stopwatch.Stop(); //останавливаем счетчик
+                MessageBox.Show(Convert.ToString(stopwatch.ElapsedMilliseconds) + " Милисекунд", "Время затраченное на поиск", MessageBoxButtons.OK, MessageBoxIcon.Information); //смотрим сколько миллисекунд было затрачено на выполнение
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
 
         private void SaveReportButton_Click(object sender, EventArgs e)

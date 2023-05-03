@@ -217,7 +217,7 @@
         #endregion
 
         private Button ChooseDirectoryButton;
-        private TextBox DirectoryNameTextBox;
+        public TextBox DirectoryNameTextBox;
         private FolderBrowserDialog folderBrowserDialog1;
         private Button SearchWordButton;
         private TextBox WordTextBox;
@@ -227,7 +227,7 @@
         private Button SaveReportButton;
         private Button ClearListBoxButton;
         private FolderBrowserDialog folderBrowserDialog2;
-        private TextBox DirectoryNameTextBox2;
+        public TextBox DirectoryNameTextBox2;
         private Button CopyButton;
         private Button ChangeButton;
         private FolderBrowserDialog folderBrowserDialog3;
